@@ -48,7 +48,48 @@
 
 
 #pragma mark - UITextViewDelegate
+- (BOOL)textViewShouldBeginEditing:(UITextView *)textView {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewShouldBeginEditing:)]) {
+        
+        return [self.fakeDelegate textViewShouldBeginEditing:textView];
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)textViewShouldEndEditing:(UITextView *)textView {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewShouldEndEditing:)]) {
+        
+        return [self.fakeDelegate textViewShouldEndEditing:textView];
+    } else {
+        return YES;
+    }
+}
+
+- (void)textViewDidBeginEditing:(UITextView *)textView {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewDidBeginEditing:)]) {
+        
+        [self.fakeDelegate textViewDidBeginEditing:textView];
+    }
+}
+
+- (void)textViewDidEndEditing:(UITextView *)textView {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewDidEndEditing:)]) {
+        
+        [self.fakeDelegate textViewDidEndEditing:textView];
+    }
+}
+
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    
     if (self.fakeDelegate
         && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
         && [self.fakeDelegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
@@ -66,40 +107,80 @@
 }
 
 - (void)textViewDidChange:(UITextView *)textView {
-    if (textView.markedTextRange && !textView.markedTextRange.empty) {
-        // 带有 marked 的输入, 如中文
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewDidChange:)]) {
+        
+        [self.fakeDelegate textViewDidChange:textView];
     } else {
-        // 只对有输入内容的操作进行限制
-        // 删除, 剪切, marked 输入方式等都是没有输入长度的
-        if (self.replacementText.length > 0 && self.restrictType > 0) {
-            NSString *filterString = [NSString rtf_filterStringWithRestrictType:self.restrictType
-                                                                replacementText:self.replacementText
-                                                            otherRestrictString:self.otherRestrictString
-                                                                      maxLength:self.maxLength
-                                                          isForceCaseConversion:self.isForceCaseConversion
-                                                                   isStrictMode:self.isStrictMode];
-            textView.text = [textView.text stringByReplacingCharactersInRange:self.shouldChangeRange withString:filterString];
-            
-            // 根据内容的输入移动光标位置
-            // dispatch_after 解决 textField.text 赋值后修改移动光标位置无法立即生效的问题
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (textView.markedTextRange && !textView.markedTextRange.empty) {
+            // 带有 marked 的输入, 如中文
+        } else {
+            // 只对有输入内容的操作进行限制
+            // 删除, 剪切, marked 输入方式等都是没有输入长度的
+            if (self.replacementText.length > 0 && self.restrictType > 0) {
+                NSString *filterString = [NSString rtf_filterStringWithRestrictType:self.restrictType
+                                                                    replacementText:self.replacementText
+                                                                otherRestrictString:self.otherRestrictString
+                                                                          maxLength:self.maxLength
+                                                              isForceCaseConversion:self.isForceCaseConversion
+                                                                       isStrictMode:self.isStrictMode];
+                textView.text = [textView.text stringByReplacingCharactersInRange:self.shouldChangeRange withString:filterString];
                 
-                NSInteger offset = self.start + filterString.length;
-                if (offset > self.maxLength) {
-                    offset = self.maxLength;
-                }
-                UITextPosition *position = [textView positionFromPosition:textView.beginningOfDocument offset:offset];
-                textView.selectedTextRange = [textView textRangeFromPosition:position toPosition:position];
-            });
+                // 根据内容的输入移动光标位置
+                // dispatch_after 解决 textField.text 赋值后修改移动光标位置无法立即生效的问题
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    
+                    NSInteger offset = self.start + filterString.length;
+                    if (offset > self.maxLength) {
+                        offset = self.maxLength;
+                    }
+                    UITextPosition *position = [textView positionFromPosition:textView.beginningOfDocument offset:offset];
+                    textView.selectedTextRange = [textView textRangeFromPosition:position toPosition:position];
+                });
+            }
+            
+            // 限制长度
+            if (textView.text.length > self.maxLength) {
+                textView.text = [textView.text substringToIndex:self.maxLength];
+            }
+            
+            self.shouldChangeRange = NSMakeRange(NSNotFound, 0);
+            self.replacementText = @"";
         }
+    }
+}
+
+- (void)textViewDidChangeSelection:(UITextView *)textView {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textViewDidChangeSelection:)]) {
         
-        // 限制长度
-        if (textView.text.length > self.maxLength) {
-            textView.text = [textView.text substringToIndex:self.maxLength];
-        }
+        [self.fakeDelegate textViewDidChangeSelection:textView];
+    }
+}
+
+- (BOOL)textView:(UITextView *)textView shouldInteractWithURL:(NSURL *)URL inRange:(NSRange)characterRange interaction:(UITextItemInteraction)interaction API_AVAILABLE(ios(10.0)) {
+    
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textView:shouldInteractWithURL:inRange:interaction:)]) {
         
-        self.shouldChangeRange = NSMakeRange(NSNotFound, 0);
-        self.replacementText = @"";
+        return [self.fakeDelegate textView:textView shouldInteractWithURL:URL inRange:characterRange interaction:interaction];
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)textView:(UITextView *)textView shouldInteractWithTextAttachment:(NSTextAttachment *)textAttachment inRange:(NSRange)characterRange interaction:(UITextItemInteraction)interaction API_AVAILABLE(ios(10.0)) {
+    
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textView:shouldInteractWithTextAttachment:inRange:interaction:)]) {
+        
+        return [self.fakeDelegate textView:textView shouldInteractWithTextAttachment:textAttachment inRange:characterRange interaction:interaction];
+    } else {
+        return YES;
     }
 }
 

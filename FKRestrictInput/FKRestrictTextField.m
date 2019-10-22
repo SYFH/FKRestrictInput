@@ -50,6 +50,46 @@
 
 
 #pragma mark - UITextFieldDelegate
+- (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldShouldBeginEditing:)]) {
+
+        return [self.fakeDelegate textFieldShouldBeginEditing:textField];
+    } else {
+        return YES;
+    }
+}
+
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldDidBeginEditing:)]) {
+
+        return [self.fakeDelegate textFieldDidBeginEditing:textField];
+    }
+}
+
+- (BOOL)textFieldShouldEndEditing:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldShouldEndEditing:)]) {
+
+        return [self.fakeDelegate textFieldShouldEndEditing:textField];
+    } else {
+        return YES;
+    }
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldDidEndEditing:)]) {
+
+        return [self.fakeDelegate textFieldDidEndEditing:textField];
+    }
+}
+
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     
     if (self.fakeDelegate
@@ -67,6 +107,52 @@
     self.start = range.location;
     
     return YES;
+}
+
+- (void)textFieldDidEndEditing:(UITextField *)textField reason:(UITextFieldDidEndEditingReason)reason API_AVAILABLE(ios(10.0)) {
+    
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldDidEndEditing:reason:)]) {
+
+        [self.fakeDelegate textFieldDidEndEditing:textField reason:reason];
+    }
+}
+
+- (void)textFieldDidChangeSelection:(UITextField *)textField API_AVAILABLE(ios(13.0), tvos(13.0)) {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldDidChangeSelection:)]) {
+
+        [self.fakeDelegate textFieldDidChangeSelection:textField];
+    }
+}
+
+- (BOOL)textFieldShouldClear:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldShouldClear:)]) {
+
+        return [self.fakeDelegate textFieldShouldClear:textField];
+    }
+    else {
+        return YES;
+    }
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textFieldShouldReturn:)]) {
+
+        return [self.fakeDelegate textFieldShouldReturn:textField];
+    }
+    else {
+        if (textField.returnKeyType == UIReturnKeyDone) {
+            [textField endEditing:YES];
+        }
+        return YES;
+    }
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
