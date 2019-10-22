@@ -26,7 +26,8 @@ textView.restrictType = RestrictTypeUpperLetter | RestrictTypeLowerLetter | Rest
 * strictMode    
 严格模式, 默认是否, 这种情况下, 对于允许外字符会进行过滤, 只留下允许范围内的字符, 而在严格模式下, 粘贴等操作不进行字符过滤, 只要其中包含限制以外的字符就忽略输入. 注意, 因为本模式会严格遍历所有字符, 所以在一次性粘贴超大量文本可能会造成卡顿.
 
-### 效果展示
+### 效果展示(图片过大, 请注意流量)
+![](https://github.com/SYFH/FKRestrictInput/blob/master/gif/1.gif)![](https://github.com/SYFH/FKRestrictInput/blob/master/gif/2.gif)
 
 ### 细节处理
 * 关于再次设置代理    
