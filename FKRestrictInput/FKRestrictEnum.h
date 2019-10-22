@@ -17,5 +17,5 @@ typedef NS_ENUM(NSInteger, RestrictType) {
     RestrictTypeWhitespace      = 1 << 4,   // 只可输入空白字符
     RestrictTypeNewLine         = 1 << 5,   // 只可输入换行字符
     RestrictTypeControl         = 1 << 6,   // 只可输入控制字符
-    RestrictTypeOther           = 1 << 9    // 另外限制的字符, 使用 otherRestrictString 属性设置, 混合使用时不可添加已在其他限制枚举中的字符, 否则会发生预料之外的结果
+    RestrictTypeOther           = 1 << 18   // 另外限制的字符, 使用 otherRestrictString 属性设置, 混合使用时不可添加已在其他限制枚举中的字符, 否则会发生预料之外的结果
 };

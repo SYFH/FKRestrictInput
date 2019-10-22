@@ -15,6 +15,8 @@
 @property (nonatomic, assign) NSUInteger start;
 @property (nonatomic, assign) NSRange shouldChangeRange;
 @property (nonatomic, strong) NSString *replacementText;
+@property (nonatomic, assign, getter=isShouldChange) BOOL shouldChange;
+@property (nonatomic, weak  , nullable) id<UITextViewDelegate> fakeDelegate;
 
 @end
 
@@ -47,11 +49,20 @@
 
 #pragma mark - UITextViewDelegate
 - (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextViewDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textView:shouldChangeTextInRange:replacementText:)]) {
+        
+        self.shouldChange = [self.fakeDelegate textView:textView shouldChangeTextInRange:range replacementText:text];
+    } else {
+        self.shouldChange = YES;
+    }
+    
     self.shouldChangeRange = NSMakeRange(range.location, text.length);
     self.replacementText = text;
     self.start = range.location;
     
-    return YES;
+    return self.shouldChange;
 }
 
 - (void)textViewDidChange:(UITextView *)textView {
@@ -90,6 +101,12 @@
         self.shouldChangeRange = NSMakeRange(NSNotFound, 0);
         self.replacementText = @"";
     }
+}
+
+#pragma mark - Getter/Setter
+- (void)setDelegate:(id<UITextViewDelegate>)delegate {
+    [super setDelegate:self];
+    if (![delegate isEqual:self]) { self.fakeDelegate = delegate; }
 }
 
 @end

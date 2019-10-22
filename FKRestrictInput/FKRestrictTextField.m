@@ -15,6 +15,8 @@
 @property (nonatomic, assign) NSUInteger start;
 @property (nonatomic, assign) NSRange shouldChangeRange;
 @property (nonatomic, strong) NSString *replacementString;
+@property (nonatomic, assign, getter=isShouldChange) BOOL shouldChange;
+@property (nonatomic, weak  , nullable) id<UITextFieldDelegate> fakeDelegate;
 
 @end
 
@@ -50,6 +52,16 @@
 #pragma mark - UITextFieldDelegate
 - (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
     
+    if (self.fakeDelegate
+        && [self.fakeDelegate conformsToProtocol:@protocol(UITextFieldDelegate)]
+        && [self.fakeDelegate respondsToSelector:@selector(textField:shouldChangeCharactersInRange:replacementString:)]) {
+
+        self.shouldChange = [self.fakeDelegate textField:textField shouldChangeCharactersInRange:range replacementString:string];
+    }
+    else {
+        self.shouldChange = YES;
+    }
+    
     self.shouldChangeRange = NSMakeRange(range.location, string.length);
     self.replacementString = string;
     self.start = range.location;
@@ -58,6 +70,8 @@
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
+    if (self.shouldChange == NO) { return; }
+    
     if (textField.markedTextRange && !textField.markedTextRange.empty) {
         // 带有 marked 的输入, 如中文
     } else {
@@ -93,6 +107,13 @@
         self.shouldChangeRange = NSMakeRange(NSNotFound, 0);
         self.replacementString = @"";
     }
+}
+
+
+#pragma mark - Getter/Setter
+- (void)setDelegate:(id<UITextFieldDelegate>)delegate {
+    [super setDelegate:self];
+    if (![delegate isEqual:self]) { self.fakeDelegate = delegate; }
 }
 
 @end
