@@ -12,7 +12,6 @@
 
 @interface FKRestrictTextField ()<UITextFieldDelegate>
 
-@property (nonatomic, assign) NSUInteger start;
 @property (nonatomic, assign) NSRange shouldChangeRange;
 @property (nonatomic, strong) NSString *replacementString;
 @property (nonatomic, assign, getter=isShouldChange) BOOL shouldChange;
@@ -46,6 +45,16 @@
     // 代理中, 在 marked 输入模式下, 输入的第一个字符无法触发 marked 标记, 故使用 target
     [self addTarget:self action:@selector(textFieldDidChange:) forControlEvents:UIControlEventEditingChanged];
     self.delegate = self;
+}
+
+- (void)moveCursorPosition:(NSInteger)offset textField:(UITextField *)textField {
+    // 根据内容的输入移动光标位置
+    // dispatch_after 解决 textField.text 赋值后修改移动光标位置无法立即生效的问题
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        
+        UITextPosition *position = [textField positionFromPosition:textField.beginningOfDocument offset:offset];
+        textField.selectedTextRange = [textField textRangeFromPosition:position toPosition:position];
+    });
 }
 
 
@@ -104,7 +113,6 @@
     
     self.shouldChangeRange = NSMakeRange(range.location, string.length);
     self.replacementString = string;
-    self.start = range.location;
     
     return YES;
 }
@@ -172,17 +180,9 @@
                                                                    isStrictMode:self.isStrictMode];
             textField.text = [textField.text stringByReplacingCharactersInRange:self.shouldChangeRange withString:filterString];
             
-            // 根据内容的输入移动光标位置
-            // dispatch_after 解决 textField.text 赋值后修改移动光标位置无法立即生效的问题
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                
-                NSInteger offset = self.start + filterString.length;
-                if (offset > self.maxLength) {
-                    offset = self.maxLength;
-                }
-                UITextPosition *position = [textField positionFromPosition:textField.beginningOfDocument offset:offset];
-                textField.selectedTextRange = [textField textRangeFromPosition:position toPosition:position];
-            });
+            NSInteger offset = self.shouldChangeRange.location + filterString.length;
+            if (offset > self.maxLength) { offset = self.maxLength; }
+            [self moveCursorPosition:offset textField:textField];
         }
         
         // 限制长度
